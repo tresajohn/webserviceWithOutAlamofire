@@ -1,0 +1,142 @@
+import UIKit
+class ApiCallTableViewCell : UITableViewCell {
+    @IBOutlet weak var collectionView: UICollectionView!
+}
+
+class ApiCallCollectionViewCell : UICollectionViewCell {
+    @IBOutlet weak var logoImageView: UIImageView!
+}
+
+class ApiCallViewController: UIViewController,UITableViewDelegate,UITableViewDataSource,UICollectionViewDelegate,UICollectionViewDataSource{
+    
+    @IBOutlet var tableView: UITableView!
+    
+    var urlToRequest : String?
+    var imageArrayList = [String]()
+    
+    var indicator: UIActivityIndicatorView?
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        tableView.delegate = self
+        tableView.dataSource = self
+        indicator = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.gray)
+        indicator?.frame = CGRect(x: 0, y: 0, width: 60, height: 60)
+        indicator?.center = view.center
+        self.view.addSubview(indicator!)
+        self.tableView.bringSubview(toFront: (indicator)!)
+        UIApplication.shared.isNetworkActivityIndicatorVisible = true
+        //imageArrayList = ["bird","bird","bird","bird","bird","bird"]
+        apiCallFunction()
+    }
+    func apiCallFunction() {
+        urlToRequest = "https://virob.com/new_staging/api/v1/user/store/search/popular"
+        dataRequest()
+    }
+    
+    func dataRequest() {
+        indicator?.startAnimating()
+        let request = NSMutableURLRequest(url: URL(string: urlToRequest!)!)
+        request.httpMethod = "POST"
+        request.cachePolicy = NSURLRequest.CachePolicy.reloadIgnoringCacheData
+        let paramString = ""
+        request.httpBody = paramString.data(using: String.Encoding.utf8)
+        request.allHTTPHeaderFields = ["token":"788ab18bf76d734912f353119074c4855fd68d59-084e0343a0486ff05530df6c705c8bb4","lat":"9.7","lng":"77"]
+        let task = URLSession.shared.dataTask(with: request as URLRequest) { (data, response, error) in
+            self.indicator?.stopAnimating()
+            guard let _: Data = data, let _: URLResponse = response, error == nil else {
+                print("*****error")
+                return
+            }
+            let responseString = NSString(data: data!, encoding: String.Encoding.utf8.rawValue)
+            print(responseString)
+            let reponseDictionary = responseString?.data(using: String.Encoding.utf8.rawValue, allowLossyConversion: false)!
+            do {
+                let json = try JSONSerialization.jsonObject(with: reponseDictionary!, options: []) as! [String: AnyObject]
+                if let names = json["categories"] as? [NSDictionary] {
+                    for count in names {
+                        self.imageArrayList.append(count["icon"] as! String)
+                    }
+                    print(self.imageArrayList)
+                    self.tableView.reloadData()
+                }
+            } catch let error as NSError {
+                print("Failed to load: \(error.localizedDescription)")
+            }
+        }
+        task.resume()
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 3
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell") as? ApiCallTableViewCell
+        cell?.collectionView.reloadData()
+        return cell!
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return imageArrayList.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Item", for: indexPath) as? ApiCallCollectionViewCell
+        cell?.contentView.layer.cornerRadius = 2.0
+        cell?.contentView.layer.borderWidth = 1.0
+        cell?.contentView.layer.borderColor = UIColor.clear.cgColor
+        cell?.contentView.layer.masksToBounds = true
+        
+        cell?.layer.shadowColor = UIColor.black.cgColor
+        cell?.layer.shadowOffset = CGSize(width: 1, height: 2.0)
+        cell?.layer.shadowRadius = 2.0
+        cell?.layer.shadowOpacity = 0.7
+        cell?.layer.masksToBounds = false
+        cell?.layer.shadowPath = UIBezierPath(roundedRect: (cell?.bounds)!, cornerRadius: (cell?.contentView.layer.cornerRadius)!).cgPath
+
+        
+        let imageURL = URL(string: imageArrayList[indexPath.row])
+        let config = URLSessionConfiguration.default
+        let session = URLSession(configuration: config)
+        //indicator?.startAnimating()
+        let task = session.dataTask(with: imageURL!, completionHandler: {data, response, error in
+            // self.indicator?.stopAnimating()
+            if let err = error {
+                print("Error: \(err)")
+                return
+            }
+            if let http = response as? HTTPURLResponse {
+                if http.statusCode == 200 {
+                    let downloadedImage = UIImage(data: data!)
+                    DispatchQueue.main.async {
+                        cell?.logoImageView.image = downloadedImage
+                    }
+                }
+            }
+        })
+        task.resume()
+        cell?.logoImageView.image = UIImage(named: imageArrayList[indexPath.row])
+        return cell!
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 150
+    }
+    
+    /*func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: (collectionView.bounds.width - 120)/3, height: 120)
+    }*/
+    
+    func setShadow(shadowView: UIView, opacity: Float,radius:CGFloat) {
+        shadowView.layer.shadowColor = UIColor.black.cgColor
+        shadowView.layer.shadowOpacity = opacity
+        shadowView.layer.shadowOffset = CGSize.zero
+        shadowView.layer.shadowRadius = radius
+    }
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+    }
+}
+
