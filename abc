@@ -39,7 +39,7 @@ class ApiCallViewController: UIViewController,UITableViewDelegate,UITableViewDat
         let request = NSMutableURLRequest(url: URL(string: urlToRequest!)!)
         request.httpMethod = "POST"
         request.cachePolicy = NSURLRequest.CachePolicy.reloadIgnoringCacheData
-        let paramString = ""
+        let paramString = ""//let paramString = "username=ramyapaygyft@virob.com&password=123456"
         request.httpBody = paramString.data(using: String.Encoding.utf8)
         request.allHTTPHeaderFields = ["token":"788ab18bf76d734912f353119074c4855fd68d59-084e0343a0486ff05530df6c705c8bb4","lat":"9.7","lng":"77"]
         let task = URLSession.shared.dataTask(with: request as URLRequest) { (data, response, error) in
