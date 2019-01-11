@@ -30,7 +30,7 @@ class ApiCallViewController: UIViewController,UITableViewDelegate,UITableViewDat
         apiCallFunction()
     }
     func apiCallFunction() {
-        urlToRequest = "https://virob.com/new_staging/api/v1/user/store/search/popular"
+        urlToRequest = "https://virob.com/new_staging/api/v1/user/store/search/popular" //http://50.28.18.145/staging/api/v1/user/login
         dataRequest()
     }
     
